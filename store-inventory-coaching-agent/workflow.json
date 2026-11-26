@@ -1,0 +1,645 @@
+{
+  "name": "Store Inventory & Coaching Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 8 * * *"
+            }
+          ]
+        }
+      },
+      "id": "c46ee78f-a77b-4c5d-894f-f59b7bec5cb3",
+      "name": "Daily Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        128,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "store-ops-run",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "ab2bf6c0-3bc6-4cb8-8acf-f81567a1ee24",
+      "name": "Ops Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        128,
+        288
+      ],
+      "webhookId": "802670b5-b77e-4872-9f73-497389989844"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "store_inventory",
+        "returnAll": true
+      },
+      "id": "26ac964a-c184-4a26-9b8e-8409c804ef48",
+      "name": "Fetch Store Stock & Sales",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        320,
+        224
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Y1F8SVsPd5qHjtKg",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json);\nconst stockoutRisks = rows.filter(r => r.stock_qty <= r.reorder_point || Number(r.days_of_cover) < 5);\nconst slowMovers = rows.filter(r => Number(r.days_of_cover) > 30 && r.units_sold_7d <= 1);\n\nconst transferPairs = [];\nfor (const need of stockoutRisks) {\n  const donor = rows.find(d =>\n    d.sku_id === need.sku_id &&\n    d.size === need.size &&\n    d.store_id !== need.store_id &&\n    d.stock_qty >= d.reorder_point + 4\n  );\n  if (donor) {\n    transferPairs.push({\n      sku_id: need.sku_id,\n      product_name: need.product_name,\n      size: need.size,\n      from_store: donor.store_name,\n      from_qty: donor.stock_qty,\n      to_store: need.store_name,\n      to_qty: need.stock_qty,\n      suggested_qty: Math.min(4, Math.max(2, donor.stock_qty - donor.reorder_point - 2)),\n    });\n  }\n}\n\nconst needsAction = stockoutRisks.length > 0 || slowMovers.length > 0;\nreturn [{\n  json: {\n    needs_action: needsAction,\n    total_skus: rows.length,\n    stockout_risks: stockoutRisks,\n    slow_movers: slowMovers,\n    transfer_pairs: transferPairs,\n  }\n}];"
+      },
+      "id": "a1f2d8f9-fc82-4528-9cf5-2a9f3158ef2c",
+      "name": "Compute Signals",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        544,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "act-cond",
+              "leftValue": "={{ $json.needs_action }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1db23149-d8bb-49f6-ad72-942153f0ca19",
+      "name": "Needs Action?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        736,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze these live store inventory signals and generate transfer recommendations + store manager coaching briefs:\n{{ JSON.stringify($json) }}",
+        "hasOutputParser": true,
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "You are a Senior Retail Merchandising & Store Operations Coach for an ethnic-wear brand.\nGiven stockout_risks, slow_movers, and transfer_pairs:\n1. Recommend the top inter-store transfer (from transfer_pairs) with urgency (high/medium) and a concise business rationale.\n2. Write a sharp, actionable daily coaching brief for store managers (coaching_summary and 2-3 bullet action_items).\nBe specific with SKU IDs, store names, and quantities.",
+          "maxIterations": 2
+        }
+      },
+      "id": "f911c380-83af-4d3a-91e3-cb5e21ae4223",
+      "name": "Ops Coach Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1008,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "id": "21022c18-f528-4ceb-a675-f00a2d12b087",
+      "name": "Gemini 2.5 Flash",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        960,
+        416
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "idwuLpBizndY2WpV",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "cd505091-e46f-4de4-9919-7f3e76892b6b",
+      "name": "GPT-4o-mini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1104,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\"top_transfer\":{\"from_store\":\"Bengaluru Indiranagar Flagship\",\"to_store\":\"Delhi South Ex Flagship\",\"sku_id\":\"MNY-SHW-101\",\"product_name\":\"Royal Ivory Silk Sherwani (Size 40)\",\"qty\":3,\"urgency\":\"high\",\"rationale\":\"Delhi has 1 unit left with 7 sold in 7d; Bengaluru has 11 units with only 1 sold.\"},\"coaching_summary\":\"Prioritize Sherwani replenishment for Delhi and run styling upsells on Emerald Velvet Jackets.\",\"action_items\":[\"Delhi South Ex: Request 3x MNY-SHW-101 from Bengaluru immediately.\",\"Delhi South Ex: Pair MNY-JKT-309 (14 units, slow mover) with festive kurta trials.\"]}"
+      },
+      "id": "76e6d04e-d01e-4723-b729-283610eadb12",
+      "name": "JSON Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1264,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "transfer_requests",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "from_store",
+              "fieldValue": "={{ $json.output.top_transfer.from_store }}"
+            },
+            {
+              "fieldId": "to_store",
+              "fieldValue": "={{ $json.output.top_transfer.to_store }}"
+            },
+            {
+              "fieldId": "sku_id",
+              "fieldValue": "={{ $json.output.top_transfer.sku_id }}"
+            },
+            {
+              "fieldId": "product_name",
+              "fieldValue": "={{ $json.output.top_transfer.product_name }}"
+            },
+            {
+              "fieldId": "qty",
+              "fieldValue": "={{ $json.output.top_transfer.qty }}"
+            },
+            {
+              "fieldId": "urgency",
+              "fieldValue": "={{ $json.output.top_transfer.urgency }}"
+            },
+            {
+              "fieldId": "rationale",
+              "fieldValue": "={{ $json.output.top_transfer.rationale }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "pending_approval"
+            }
+          ]
+        }
+      },
+      "id": "b0a9d359-b602-42eb-b40f-653d0b9a9e6a",
+      "name": "Log Transfer (Pending)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1440,
+        224
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Y1F8SVsPd5qHjtKg",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "8416093451",
+        "text": "=📊 <b>DAILY STORE OPS & COACHING BRIEF</b>\n\n<b>Summary:</b> {{ $(\"Ops Coach Agent\").item.json.output.coaching_summary }}\n\n<b>Action Items:</b>\n• {{ ($(\"Ops Coach Agent\").item.json.output.action_items || []).join(\"\\n• \") }}\n\n<b>Proposed Transfer ({{ $(\"Ops Coach Agent\").item.json.output.top_transfer.urgency.toUpperCase() }}):</b>\n{{ $(\"Ops Coach Agent\").item.json.output.top_transfer.qty }}x {{ $(\"Ops Coach Agent\").item.json.output.top_transfer.product_name }}\n{{ $(\"Ops Coach Agent\").item.json.output.top_transfer.from_store }} ➡️ {{ $(\"Ops Coach Agent\").item.json.output.top_transfer.to_store }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "disable_web_page_preview": true,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "186f2da6-e736-47c0-b014-6f74c2bb8099",
+      "name": "Send Coaching to Manager",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1600,
+        224
+      ],
+      "webhookId": "72c3e8ab-67c1-4ca6-bc49-925d3fc8a593",
+      "credentials": {
+        "telegramApi": {
+          "id": "L42ogkP1JVJTbGgY",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, status: $(\"Needs Action?\").item.json.needs_action ? \"coaching_sent_pending_hitl\" : \"healthy_no_action\", transfer_id: $(\"Log Transfer (Pending)\").item?.json?.id ?? null, coaching: $(\"Ops Coach Agent\").item?.json?.output ?? null }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "cb980bf9-332a-4fa9-a508-abdd1a677425",
+      "name": "Reply Ops (200)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1776,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "8416093451",
+        "message": "=🚚 <b>APPROVE STOCK TRANSFER?</b>\n\n<b>SKU:</b> {{ $(\"Ops Coach Agent\").item.json.output.top_transfer.sku_id }} — {{ $(\"Ops Coach Agent\").item.json.output.top_transfer.product_name }}\n<b>Qty:</b> {{ $(\"Ops Coach Agent\").item.json.output.top_transfer.qty }} units\n<b>Route:</b> {{ $(\"Ops Coach Agent\").item.json.output.top_transfer.from_store }} ➡️ {{ $(\"Ops Coach Agent\").item.json.output.top_transfer.to_store }}\n<b>Why:</b> {{ $(\"Ops Coach Agent\").item.json.output.top_transfer.rationale }}",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double"
+          }
+        },
+        "options": {}
+      },
+      "id": "f7e7968e-b8cf-4a16-9ec4-23de7b4b8014",
+      "name": "Transfer HITL",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1952,
+        224
+      ],
+      "webhookId": "75cca411-775d-4a72-baf3-086d0efad2f2",
+      "credentials": {
+        "telegramApi": {
+          "id": "L42ogkP1JVJTbGgY",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "transfer_requests",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $(\"Log Transfer (Pending)\").item.json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "={{ $json.data?.approved ? \"approved\" : \"rejected\" }}"
+            },
+            {
+              "fieldId": "approved_by",
+              "fieldValue": "Telegram Merchandiser"
+            }
+          ]
+        }
+      },
+      "id": "f833087c-e25f-487d-a597-9e5340f9ded8",
+      "name": "Update Transfer",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2128,
+        224
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Y1F8SVsPd5qHjtKg",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "08ecf11d-d4ea-41a9-8b78-0904b87ce810",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        128,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "8416093451",
+        "text": "=🚨 <b>STORE OPS AGENT ERROR</b>\n\n<b>Node:</b> {{ $json.execution?.lastNodeExecuted ?? \"Unknown\" }}\n<b>Error:</b> {{ $json.execution?.error?.message ?? \"Unhandled\" }}\n🔗 <a href=\"{{ $json.execution?.url ?? \"\" }}\">Inspect Run</a>",
+        "additionalFields": {
+          "appendAttribution": false,
+          "disable_web_page_preview": true,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "e188df14-7cf6-4800-a1c3-ad79e85a8d41",
+      "name": "Error Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        320,
+        544
+      ],
+      "webhookId": "37cb822f-ee42-4ba3-81ea-290ec51bc90f",
+      "credentials": {
+        "telegramApi": {
+          "id": "L42ogkP1JVJTbGgY",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# 1. Trigger & Snapshot\n### Daily 8:30 AM IST or `POST /webhook/store-ops-run` → fetches `store_inventory`.",
+        "height": 384,
+        "width": 400,
+        "color": 4
+      },
+      "id": "4e7fd64e-d38d-4409-b599-75b1ee4398bb",
+      "name": "Sticky Note 19242520",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        80,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# 2. Signals & Decision\n### Flags stockouts (`< 5d`) & slow movers (`> 30d`), pairs stores, skips AI if healthy.",
+        "height": 336,
+        "width": 416,
+        "color": 6
+      },
+      "id": "088b3a1a-7558-4182-9bc4-fdd75f3308cb",
+      "name": "Sticky Note 447d79c4",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        496,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# 3. AI Coaching\n### Gemini 2.5 Flash + `gpt-4o-mini` fallback → structured transfer & coaching brief.",
+        "height": 384,
+        "width": 448,
+        "color": 5
+      },
+      "id": "7884e6c1-461c-45fa-bc67-e3e20052f0ec",
+      "name": "Sticky Note 394b6242",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        928,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# 4. Human Approval\n### Logs transfer, sends coaching brief, & pauses for 1-tap Telegram `Approve / Reject`.",
+        "height": 336,
+        "width": 896
+      },
+      "id": "d956a835-03e2-453e-8104-8c5e7c02f3f5",
+      "name": "Sticky Note b4cc70d1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# 5. Error Monitor\n### Alerts Telegram on any uncaught failure.",
+        "height": 256,
+        "width": 384,
+        "color": 3
+      },
+      "id": "51258c2f-fdb2-44c0-afa8-022d0c996ea0",
+      "name": "Sticky Note d1cd7cfc",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        96,
+        432
+      ]
+    }
+  ],
+  "connections": {
+    "Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "Fetch Store Stock & Sales",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ops Webhook": {
+      "main": [
+        [
+          {
+            "node": "Fetch Store Stock & Sales",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute Signals": {
+      "main": [
+        [
+          {
+            "node": "Needs Action?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ops Coach Agent": {
+      "main": [
+        [
+          {
+            "node": "Log Transfer (Pending)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini 2.5 Flash": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Ops Coach Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-4o-mini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Ops Coach Agent",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "JSON Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Ops Coach Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transfer HITL": {
+      "main": [
+        [
+          {
+            "node": "Update Transfer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs Action?": {
+      "main": [
+        [
+          {
+            "node": "Ops Coach Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply Ops (200)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reply Ops (200)": {
+      "main": [
+        [
+          {
+            "node": "Transfer HITL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Store Stock & Sales": {
+      "main": [
+        [
+          {
+            "node": "Compute Signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Transfer (Pending)": {
+      "main": [
+        [
+          {
+            "node": "Send Coaching to Manager",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Coaching to Manager": {
+      "main": [
+        [
+          {
+            "node": "Reply Ops (200)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "availableInMCP": true,
+    "binaryMode": "separate"
+  },
+  "pinData": {},
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp"
+  }
+}
