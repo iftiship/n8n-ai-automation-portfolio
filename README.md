@@ -7,7 +7,7 @@ Production-grade **n8n** workflows engineered with structured JSON outputs, pre-
 | # | Project | Stack | Status |
 |---|---|---|---|
 | 1 | **[Product Attribute Tagger](./product-attribute-tagger/)** | n8n, Gemini 3 Flash Vision, OpenAI `gpt-4o-mini` Fallback, Google Drive, Google Sheets, Telegram HITL | **Live & Production-Ready** |
-| 2 | **Retail Support RAG Agent** | n8n, RAG, Vector Knowledge Base, Human Escalation | *Coming Next* |
+| 2 | **[Retail Support RAG Agent](./retail-support-rag-agent/)** | n8n, Supabase `pgvector`, OpenAI `text-embedding-3-small`, Gemini 2.5 Flash + `gpt-4o-mini` Fallback, Telegram Escalation | **Live & Production-Ready** |
 | 3 | **Store Inventory & Coaching Agent** | n8n, LLM, Retail Sales Analytics, HITL Transfer Approvals | *Coming Next* |
 | 4 | **Ask-Your-Sales-Data Agent** | n8n, Natural-Language Querying, Supabase, LLM | *Coming Next* |
 
