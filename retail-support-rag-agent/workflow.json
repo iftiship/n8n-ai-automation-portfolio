@@ -1,0 +1,856 @@
+{
+  "name": "Retail Support RAG Agent - Policy & Escalation Engine",
+  "nodes": [
+    {
+      "id": "3f928275-0f0c-4539-9427-4327a9245d70",
+      "name": "KB Ingest Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        120,
+        180
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "retail-kb-ingest",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "054db9b0-9a6b-4147-a567-c46bfb516525"
+    },
+    {
+      "id": "0e4936a4-7614-4cc9-964d-95a4aa025839",
+      "name": "Split KB Documents",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        360,
+        180
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const raw = $input.first().json || {};\nconst body = (raw.body && typeof raw.body === \"object\") ? raw.body : raw;\nconst docs = Array.isArray(body.documents) ? body.documents : (body.text ? [body] : []);\nreturn docs.filter(d => d && String(d.text || d.content || \"\").trim()).map((d, idx) => ({\n  json: {\n    text: String(d.text || d.content).trim(),\n    topic: String(d.topic || \"General Policy\").trim(),\n    category: String(d.category || \"policy\").trim(),\n    doc_index: idx\n  }\n}));"
+      }
+    },
+    {
+      "id": "14004b57-c852-4fbd-b63d-7a961e7d4152",
+      "name": "Insert into customer_kb",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.4,
+      "position": [
+        620,
+        180
+      ],
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "customer_kb",
+          "cachedResultName": "customer_kb"
+        },
+        "embeddingBatchSize": 50,
+        "options": {
+          "queryName": "match_customer_kb"
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "Y1F8SVsPd5qHjtKg",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "id": "5b7b0a32-7c02-4954-90bc-e60282f77ca3",
+      "name": "Embeddings OpenAI (Ingest)",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        560,
+        340
+      ],
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {
+          "dimensions": 1536
+        }
+      }
+    },
+    {
+      "id": "d41e0182-1830-4576-99f1-33a2550ad53a",
+      "name": "KB JSON Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        340
+      ],
+      "parameters": {
+        "dataType": "json",
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.text }}",
+        "textSplittingMode": "simple",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "topic",
+                "value": "={{ $json.topic }}"
+              },
+              {
+                "name": "category",
+                "value": "={{ $json.category }}"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "a0d51ca2-186c-4401-a7f0-1084f1deda3b",
+      "name": "Respond KB Ingested (200)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        880,
+        180
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, status: \"ingested\", chunks_added: $input.all().length }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "6b874ce2-0a80-47ce-aeb2-8f6b0fea925b",
+      "name": "Customer Support Chat",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        120,
+        560
+      ],
+      "parameters": {
+        "public": false,
+        "options": {}
+      },
+      "webhookId": "5d322d68-57f1-4f2d-b34d-c61b1f4b02ae"
+    },
+    {
+      "id": "ee60109e-eccd-4b5e-bc55-67535a08455f",
+      "name": "Normalize Customer Inquiry",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        380,
+        640
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const j = $input.item.json || {};\nconst src = (j.body && typeof j.body === \"object\") ? j.body : j;\nconst isChat = Boolean(j.chatInput !== undefined);\nconst question = String(src.chatInput || src.question || src.message || \"\").trim();\nconst sessionId = String(src.sessionId || src.session_id || \"retail-sess-\" + Date.now()).trim();\nreturn {\n  json: {\n    channel: isChat ? \"web_chat\" : \"webhook\",\n    session_id: sessionId,\n    customer_name: String(src.customer_name || \"Guest Customer\").trim(),\n    customer_contact: String(src.customer_contact || \"Not provided\").trim(),\n    question\n  }\n};"
+      }
+    },
+    {
+      "id": "fb019793-3dc5-4a8d-9e7b-0c70e1484aa6",
+      "name": "Support API Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        120,
+        740
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "retail-support-agent",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "fdccbe9d-8949-4071-a01f-7fda6abee2d7"
+    },
+    {
+      "id": "c9bc7d55-bf17-4680-a1ef-ef9cd5875674",
+      "name": "Retail Support RAG Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        720,
+        640
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Customer Question: {{ $json.question }}",
+        "hasOutputParser": true,
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "You are a warm, precise Retail Customer Support Specialist for an ethnic-wear & occasion-wear fashion brand.\n\nSTRICT GROUNDING RULES:\n1. ALWAYS call the \"Retail Knowledge Base\" tool first with a short keyword query (e.g. \"exchange policy\", \"sherwani sizing\", \"store appointment\").\n2. Answer ONLY using facts returned by the knowledge base tool. Never invent policies, timelines, prices, or store addresses.\n3. Set confidence_score (0-100) honestly:\n   - 85-100: Direct, unambiguous match in the knowledge base.\n   - 60-84: Partial match or nuance missing.\n   - 0-59: Not covered in KB, custom alteration exception, complaint, or VIP bespoke request.\n4. Set needs_human_escalation = true whenever confidence_score < 70, the customer requests a human/exception/complaint resolution, or asks something not in the KB.\n5. intent_category must be one of: returns_exchanges | sizing_fit | store_appointment | fabric_care | order_exception | general.",
+          "maxIterations": 4
+        }
+      }
+    },
+    {
+      "id": "dd7d00fa-188b-46f5-b491-0393c6834143",
+      "name": "Gemini 2.5 Flash (Primary)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        560,
+        840
+      ],
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "credentials": {
+        "googlePalmApi": {
+          "id": "idwuLpBizndY2WpV",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "id": "c31ae28a-ffd9-452a-896f-643ab3b5b315",
+      "name": "OpenAI GPT-4o-mini (Fallback)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        700,
+        840
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "e69763dc-30b4-4320-9896-dd8b905bc7b1",
+      "name": "Session Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        840,
+        840
+      ],
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $(\"Normalize Customer Inquiry\").item.json.session_id }}",
+        "contextWindowLength": 6
+      }
+    },
+    {
+      "id": "ae381fac-da42-47e2-8cb2-ba65cfd4de9b",
+      "name": "Retail Knowledge Base",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.4,
+      "position": [
+        980,
+        840
+      ],
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Searches the official retail policy and catalog knowledge base (returns, exchanges, sizing, bridal/groom store appointments, alterations, fabric care). Always pass a concise keyword query.",
+        "tableName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "customer_kb",
+          "cachedResultName": "customer_kb"
+        },
+        "topK": 5,
+        "includeDocumentMetadata": true,
+        "options": {
+          "queryName": "match_customer_kb"
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "Y1F8SVsPd5qHjtKg",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "id": "fe707544-fd05-4757-a2d5-300e24f4d676",
+      "name": "Embeddings OpenAI (Query)",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        980,
+        980
+      ],
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {
+          "dimensions": 1536
+        }
+      }
+    },
+    {
+      "id": "6a166756-63d2-4c9d-963f-1c2f9ec0a116",
+      "name": "Structured Support Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1120,
+        840
+      ],
+      "parameters": {
+        "schemaType": "fromJson",
+        "jsonSchemaExample": "{\"answer\":\"Unworn garments with original tags can be exchanged within 15 days of delivery or purchase at any flagship store.\",\"confidence_score\":95,\"intent_category\":\"returns_exchanges\",\"needs_human_escalation\":false,\"escalation_reason\":\"\",\"cited_policy_topic\":\"Returns & Exchanges Policy\"}"
+      }
+    },
+    {
+      "id": "ec308711-0725-4624-859d-629d79a34a7a",
+      "name": "Evaluate Confidence & Escalation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1300,
+        640
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const inq = $(\"Normalize Customer Inquiry\").item.json || {};\nconst raw = $input.item.json || {};\nconst out = (raw.output && typeof raw.output === \"object\") ? raw.output : raw;\nconst conf = Math.max(0, Math.min(100, Math.round(Number(out.confidence_score ?? 0) || 0)));\nconst escalate = Boolean(out.needs_human_escalation) || conf < 70 || !out.answer;\nconst reason = escalate ? String(out.escalation_reason || (conf < 70 ? \"Low RAG confidence (\" + conf + \"% < 70%)\" : \"Customer requested human assistance\")) : \"\";\nconst answer = String(out.answer || \"I am connecting you with our retail specialist who can assist you right away.\").trim();\nreturn {\n  json: {\n    session_id: inq.session_id,\n    channel: inq.channel,\n    customer_name: inq.customer_name,\n    customer_contact: inq.customer_contact,\n    question: inq.question,\n    answer,\n    intent_category: String(out.intent_category || \"general\"),\n    cited_policy_topic: String(out.cited_policy_topic || \"N/A\"),\n    confidence_score: conf,\n    escalated: escalate,\n    escalation_reason: reason,\n    status: escalate ? \"escalated\" : \"resolved\"\n  }\n};"
+      }
+    },
+    {
+      "id": "3d0b8ef0-e680-4b30-a0e4-d672909c08aa",
+      "name": "Log Ticket to Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1540,
+        640
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "create",
+        "tableId": "support_tickets",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "session_id",
+              "fieldValue": "={{ $json.session_id }}"
+            },
+            {
+              "fieldId": "channel",
+              "fieldValue": "={{ $json.channel }}"
+            },
+            {
+              "fieldId": "customer_name",
+              "fieldValue": "={{ $json.customer_name }}"
+            },
+            {
+              "fieldId": "customer_contact",
+              "fieldValue": "={{ $json.customer_contact }}"
+            },
+            {
+              "fieldId": "question",
+              "fieldValue": "={{ $json.question }}"
+            },
+            {
+              "fieldId": "answer",
+              "fieldValue": "={{ $json.answer }}"
+            },
+            {
+              "fieldId": "intent_category",
+              "fieldValue": "={{ $json.intent_category }}"
+            },
+            {
+              "fieldId": "confidence_score",
+              "fieldValue": "={{ $json.confidence_score }}"
+            },
+            {
+              "fieldId": "escalated",
+              "fieldValue": "={{ $json.escalated }}"
+            },
+            {
+              "fieldId": "escalation_reason",
+              "fieldValue": "={{ $json.escalation_reason }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "={{ $json.status }}"
+            }
+          ]
+        }
+      },
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "supabaseApi": {
+          "id": "Y1F8SVsPd5qHjtKg",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "id": "0aa77009-f3f7-4668-9e9f-6f13edc7486e",
+      "name": "Low Confidence / Escalate?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1780,
+        640
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "esc-cond",
+              "leftValue": "={{ $(\"Evaluate Confidence & Escalation\").item.json.escalated }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "33c2d47b-7b8e-4f97-8b02-2f51da0779e6",
+      "name": "Escalate to Human (Telegram)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2040,
+        540
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "8416093451",
+        "text": "=🆘 <b>SUPPORT ESCALATION</b> ({{ $(\"Evaluate Confidence & Escalation\").item.json.confidence_score }}% Confidence)\n\n<b>Customer:</b> {{ $(\"Evaluate Confidence & Escalation\").item.json.customer_name }} ({{ $(\"Evaluate Confidence & Escalation\").item.json.customer_contact }})\n<b>Intent:</b> {{ $(\"Evaluate Confidence & Escalation\").item.json.intent_category }}\n<b>Reason:</b> {{ $(\"Evaluate Confidence & Escalation\").item.json.escalation_reason }}\n\n<b>Question:</b>\n{{ $(\"Evaluate Confidence & Escalation\").item.json.question }}\n\n<b>AI Draft:</b>\n{{ $(\"Evaluate Confidence & Escalation\").item.json.answer }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "disable_web_page_preview": true,
+          "parse_mode": "HTML"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "webhookId": "a7f2eb6d-12f7-4093-a5ca-7346085bcad1",
+      "credentials": {
+        "telegramApi": {
+          "id": "L42ogkP1JVJTbGgY",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "id": "278b5dca-ecd7-4117-b5c0-ced43b0ba6ac",
+      "name": "Respond Escalated (200)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2300,
+        540
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, status: \"escalated_to_human\", ticket_id: $(\"Log Ticket to Supabase\").item.json.id ?? null, data: $(\"Evaluate Confidence & Escalation\").item.json }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "7f9df2fb-73ca-45ed-b50a-854716edcc36",
+      "name": "Respond Resolved (200)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2040,
+        740
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, status: \"resolved\", ticket_id: $(\"Log Ticket to Supabase\").item.json.id ?? null, data: $(\"Evaluate Confidence & Escalation\").item.json }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "ce85b0bb-4049-4ae2-b796-68f02f1bfe0e",
+      "name": "On Workflow Error",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        120,
+        1020
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "8400780f-5cf0-4789-a57d-b504afcd5c9e",
+      "name": "Alert Owner on Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        380,
+        1020
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "8416093451",
+        "text": "=🚨 <b>RETAIL RAG AGENT ERROR</b>\n\n<b>Node:</b> {{ $json.execution?.lastNodeExecuted ?? \"Unknown\" }}\n<b>Error:</b> {{ $json.execution?.error?.message ?? \"Unhandled\" }}\n🔗 <a href=\"{{ $json.execution?.url ?? \"\" }}\">Inspect Run</a>",
+        "additionalFields": {
+          "appendAttribution": false,
+          "disable_web_page_preview": true,
+          "parse_mode": "HTML"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "webhookId": "4d97be62-1f5d-432a-87c1-ee849a74dbd8",
+      "credentials": {
+        "telegramApi": {
+          "id": "L42ogkP1JVJTbGgY",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "id": "d9117dff-83af-421c-80b6-179d561a0fe4",
+      "name": "Sticky Note 914e27d7",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        96,
+        80
+      ],
+      "parameters": {
+        "content": "## 1. Vector Knowledge Base Ingestion (`customer_kb`)\n`POST /webhook/retail-kb-ingest` chunks policy & catalog docs, embeds with `text-embedding-3-small` (1536d), and upserts into Supabase `pgvector`.",
+        "color": 7,
+        "width": 928,
+        "height": 368
+      }
+    },
+    {
+      "id": "aaae315b-1953-40ba-9b07-d6a1f1d859c4",
+      "name": "Sticky Note 5120e01c",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        96,
+        464
+      ],
+      "parameters": {
+        "content": "## 2. Multi-Channel Support Intake\nAccepts live web chat (`Customer Support Chat`) or REST API (`POST /webhook/retail-support-agent`) and normalizes session & customer metadata.",
+        "color": 4,
+        "width": 416,
+        "height": 400
+      }
+    },
+    {
+      "id": "89649771-7d7c-469b-843c-b8c486761b30",
+      "name": "Sticky Note c92aec33",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        528,
+        544
+      ],
+      "parameters": {
+        "content": "## 3. Grounded RAG Agent + Fallback LLM\n- **Primary:** Gemini 2.5 Flash | **Fallback:** OpenAI `gpt-4o-mini`\n- Queries Supabase `customer_kb` (`match_customer_kb`) & enforces structured JSON with `confidence_score`.",
+        "color": 5,
+        "width": 720,
+        "height": 544
+      }
+    },
+    {
+      "id": "92735dea-2ee9-45f3-9e22-e3d4a238b2c4",
+      "name": "Sticky Note 3a4d57ea",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        448
+      ],
+      "parameters": {
+        "content": "## 4. Confidence Gate, Ticket Audit & Human Escalation\n- Logs every interaction to Supabase `support_tickets`.\n- **Confidence < 70% or Exception:** Escalates immediately to a human specialist on Telegram.",
+        "color": 2,
+        "width": 1168,
+        "height": 432
+      }
+    },
+    {
+      "id": "763d4160-01c3-45b3-a56c-1a76f98187a0",
+      "name": "Sticky Note bd2de82b",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        96,
+        928
+      ],
+      "parameters": {
+        "content": "## 5. Production Error Monitor\nCaptures uncaught failures and alerts Telegram with a direct execution link.",
+        "color": 3,
+        "width": 416,
+        "height": 224
+      }
+    }
+  ],
+  "connections": {
+    "KB Ingest Webhook": {
+      "main": [
+        [
+          {
+            "node": "Split KB Documents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split KB Documents": {
+      "main": [
+        [
+          {
+            "node": "Insert into customer_kb",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert into customer_kb": {
+      "main": [
+        [
+          {
+            "node": "Respond KB Ingested (200)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI (Ingest)": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert into customer_kb",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "KB JSON Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Insert into customer_kb",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customer Support Chat": {
+      "main": [
+        [
+          {
+            "node": "Normalize Customer Inquiry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Customer Inquiry": {
+      "main": [
+        [
+          {
+            "node": "Retail Support RAG Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Support API Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Customer Inquiry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retail Support RAG Agent": {
+      "main": [
+        [
+          {
+            "node": "Evaluate Confidence & Escalation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini 2.5 Flash (Primary)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Retail Support RAG Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI GPT-4o-mini (Fallback)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Retail Support RAG Agent",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Session Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Retail Support RAG Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retail Knowledge Base": {
+      "ai_tool": [
+        [
+          {
+            "node": "Retail Support RAG Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI (Query)": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Retail Knowledge Base",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Support Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Retail Support RAG Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluate Confidence & Escalation": {
+      "main": [
+        [
+          {
+            "node": "Log Ticket to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Ticket to Supabase": {
+      "main": [
+        [
+          {
+            "node": "Low Confidence / Escalate?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Low Confidence / Escalate?": {
+      "main": [
+        [
+          {
+            "node": "Escalate to Human (Telegram)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Resolved (200)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escalate to Human (Telegram)": {
+      "main": [
+        [
+          {
+            "node": "Respond Escalated (200)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On Workflow Error": {
+      "main": [
+        [
+          {
+            "node": "Alert Owner on Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "timezone": "Asia/Kolkata",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all"
+  },
+  "pinData": {},
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp"
+  }
+}
