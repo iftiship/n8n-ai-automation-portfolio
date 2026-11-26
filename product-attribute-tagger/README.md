@@ -3,7 +3,9 @@
 A production-ready, vision-based garment cataloging pipeline built in **n8n** that reads garment product images from **Google Drive** or a **REST Webhook**, extracts structured merchandising attributes (**colour, hex, fabric, weight, texture, design type, silhouette, and SEO tags**), and upserts them directly into **Google Sheets** with automatic fallback routing and **Telegram HITL** quality assurance.
 
 ## Workflow Preview
-![n8n Workflow Canvas](./assets/workflow-canvas.jpg)
+<img width="1875" height="862" alt="Screenshot 2026-11-26 104308" src="https://github.com/user-attachments/assets/f8bc6e24-9d9e-4ac8-ae59-a269d856e9da" />
+
+
 
 ## Architecture Overview
 
