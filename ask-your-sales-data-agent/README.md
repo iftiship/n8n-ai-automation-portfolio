@@ -22,7 +22,7 @@ I built this **36-node omnichannel n8n + Supabase BI agent** to solve all three:
 1. **Omnichannel Intake & Guard (`Sales BI Chat` / `Sales BI Webhook` / `Slack BI Trigger` / `WhatsApp BI Trigger` → `Normalize & Input Guard` → `Input Safe?`)**
    - Listens across **Web Chat, REST Webhook, Slack, and WhatsApp**, filters out bot loops, and blocks prompt/SQL injection before any LLM is called.
 2. **Query Planner (`Query Planner Agent` — Dual-LLM)**
-   - Uses **Gemini 3 Flash** (with automatic fallback to **OpenAI `gpt-4o-mini`**), `Session Memory`, and `Plan JSON Parser` to translate plain English into a structured, read-only query plan.
+   - Uses **DeepSeek Chat** (with automatic fallback to **OpenAI `gpt-4o-mini`**), `Session Memory`, and `Plan JSON Parser` to translate plain English into a structured, read-only query plan.
 3. **Security Gate & Deterministic BI Engine (`Query Security Gate` → `Deterministic Analytics Engine`)**
    - Enforces **SELECT-only** rules, routes to `orders` or `store_inventory` in Supabase, **redacts PII**, and computes all totals, averages, and rankings deterministically in JavaScript.
 4. **Executive Narrator & Channel-Native Replies (`Executive Narrator Agent` → `Route Reply Channel`)**
@@ -36,11 +36,11 @@ I built this **36-node omnichannel n8n + Supabase BI agent** to solve all three:
 
 ## Tech Stack
 - **Orchestration:** n8n (36 functional nodes, 6 color-coded stages)
-- **LLMs:** Google Gemini 3 Flash (Planner), DeepSeek Chat (Narrator), OpenAI `gpt-4o-mini` (Fallback for both)
+- **LLMs:** DeepSeek Chat (Planner & Narrator), OpenAI `gpt-4o-mini` (Fallback for both)
 - **Database:** Supabase (`orders`, `store_inventory`)
 - **Channels & Alerts:** Web Chat, REST Webhook, Slack, WhatsApp, Telegram (Security & Error Alerts)
 
 ## Quick Setup
 1. Import [`workflow.json`](./workflow.json) into n8n.
-2. Connect your **Supabase**, **Google Gemini**, **DeepSeek**, **OpenAI** (or n8n Gateway), **Slack**, **WhatsApp**, and **Telegram** credentials.
+2. Connect your **Supabase**, **DeepSeek**, **OpenAI** (or n8n Gateway), **Slack**, **WhatsApp**, and **Telegram** credentials.
 3. Publish the workflow and ask a question from Web Chat, Slack, WhatsApp, or the REST Webhook.
