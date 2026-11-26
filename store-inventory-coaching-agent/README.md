@@ -1,5 +1,7 @@
 # Store Inventory & Coaching Agent
 
+> **Design Principle:** Code computes the signals. AI explains them. A human approves any stock movement.
+
 ## The Problem It Solves
 In multi-store ethnic-wear retail, two things quietly hurt revenue every week:
 1. **Imbalanced Store Stock:** One flagship store sells out of a bestselling Sherwani right before wedding weekend, while another city has 11 units sitting unsold.
