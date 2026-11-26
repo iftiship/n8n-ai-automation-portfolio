@@ -1,5 +1,8 @@
 # Store Inventory & Coaching Agent
 
+## Workflow Preview
+<img width="1878" height="867" alt="IMG_20261126_203439" src="https://github.com/user-attachments/assets/e1533e82-12fa-4425-81c8-7cdb78741a8f" />
+
 > **Design Principle:** Code computes the signals. AI explains them. A human approves any stock movement.
 
 ## The Problem It Solves
