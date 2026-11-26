@@ -1,5 +1,8 @@
 # Ask-Your-Sales-Data Agent — Guardrailed Retail BI Engine
 
+## Workflow Preview
+<img width="1870" height="867" alt="IMG_20261126_224550" src="https://github.com/user-attachments/assets/a41e2fc4-2ea9-4c86-bdcc-78463dc3da58" />
+
 > **Design Principle:** The LLM plans the question and narrates the insight. Deterministic code enforces security, redacts PII, and does all the math.
 
 ## The Problem It Solves
