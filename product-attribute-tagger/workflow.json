@@ -6,40 +6,66 @@
       "name": "Drive Garment Intake",
       "type": "n8n-nodes-base.googleDriveTrigger",
       "typeVersion": 1,
-      "position": [120, 220],
+      "position": [
+        120,
+        220
+      ],
       "parameters": {
-        "pollTimes": { "item": [{ "mode": "everyMinute" }] },
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
         "triggerOn": "specificFolder",
-        "folderToWatch": { "__rl": true, "mode": "id", "value": "1gARE6gLVxOq3ei0kFbcJR30fqBUqVPyw", "cachedResultName": "01_Intake_Garments" },
+        "folderToWatch": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_DRIVE_INTAKE_FOLDER_ID",
+          "cachedResultName": "01_Intake_Garments"
+        },
         "event": "fileCreated",
-        "options": { "fileType": "all" }
-      },
-      "credentials": { "googleDriveOAuth2Api": { "id": "ENlFJ5nsg44Ge62M", "name": "Google Drive account" } }
+        "options": {
+          "fileType": "all"
+        }
+      }
     },
     {
       "id": "43ae6f35-311d-4c72-ae07-0ca44ab5a321",
       "name": "Download Drive Image",
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
-      "position": [360, 220],
+      "position": [
+        360,
+        220
+      ],
       "parameters": {
         "resource": "file",
         "operation": "download",
-        "fileId": { "__rl": true, "mode": "id", "value": "={{ $json.id }}" },
-        "options": { "binaryPropertyName": "data" }
+        "fileId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.id }}"
+        },
+        "options": {
+          "binaryPropertyName": "data"
+        }
       },
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 1500,
-      "onError": "continueRegularOutput",
-      "credentials": { "googleDriveOAuth2Api": { "id": "ENlFJ5nsg44Ge62M", "name": "Google Drive account" } }
+      "onError": "continueRegularOutput"
     },
     {
       "id": "b4a1f24d-745f-4e54-b011-560cda48662c",
       "name": "Pre-Flight & Normalize",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [900, 320],
+      "position": [
+        900,
+        320
+      ],
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
@@ -51,25 +77,47 @@
       "name": "Webhook Garment Intake",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.2,
-      "position": [120, 440],
+      "position": [
+        120,
+        440
+      ],
       "parameters": {
         "httpMethod": "POST",
         "path": "product-attribute-tagger",
         "responseMode": "responseNode",
-        "options": { "binaryPropertyName": "data" }
-      },
-      "webhookId": "2efd1c82-25a0-425c-92b8-4b0ec8cd51e8"
+        "options": {
+          "binaryPropertyName": "data"
+        }
+      }
     },
     {
       "id": "4b9b261c-a6b8-47b2-9200-ba5cbf82e7d2",
       "name": "Needs URL Fetch?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.4,
-      "position": [360, 440],
+      "position": [
+        360,
+        440
+      ],
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose" },
-          "conditions": [{ "id": "url-fetch-cond", "leftValue": "={{ !$binary?.data && !$binary?.data0 && /^https?:\\/\\//i.test($json.body?.image_url ?? $json.image_url ?? \"\") }}", "operator": { "type": "boolean", "operation": "true", "singleValue": true }, "rightValue": "" }],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "url-fetch-cond",
+              "leftValue": "={{ !$binary?.data && !$binary?.data0 && /^https?:\\/\\//i.test($json.body?.image_url ?? $json.image_url ?? \"\") }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
           "combinator": "and"
         }
       }
@@ -79,14 +127,27 @@
       "name": "Fetch Image URL",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
-      "position": [580, 380],
+      "position": [
+        580,
+        380
+      ],
       "parameters": {
         "method": "GET",
         "url": "={{ $json.body?.image_url ?? $json.image_url }}",
         "options": {
           "timeout": 15000,
-          "redirect": { "redirect": { "followRedirects": true, "maxRedirects": 5 } },
-          "response": { "response": { "responseFormat": "file", "outputPropertyName": "data" } }
+          "redirect": {
+            "redirect": {
+              "followRedirects": true,
+              "maxRedirects": 5
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          }
         }
       },
       "retryOnFail": true,
@@ -99,11 +160,29 @@
       "name": "Valid Image?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.4,
-      "position": [1140, 320],
+      "position": [
+        1140,
+        320
+      ],
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
-          "conditions": [{ "id": "v-img", "leftValue": "={{ $json.is_valid_image }}", "operator": { "type": "boolean", "operation": "true", "singleValue": true }, "rightValue": "" }],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "v-img",
+              "leftValue": "={{ $json.is_valid_image }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
           "combinator": "and"
         }
       }
@@ -113,20 +192,39 @@
       "name": "Merge Dedup & Binary",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
-      "position": [1380, 220],
-      "parameters": { "mode": "combine", "combineBy": "combineByPosition" }
+      "position": [
+        1380,
+        220
+      ],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition"
+      }
     },
     {
       "id": "8c7aaa44-334a-41f0-bb08-e5c5d7194838",
       "name": "Log Error to Audit Sheet",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
-      "position": [1380, 540],
+      "position": [
+        1380,
+        540
+      ],
       "parameters": {
         "resource": "sheet",
         "operation": "append",
-        "documentId": { "__rl": true, "mode": "id", "value": "1tn8uOXKWjVTvssTVkTRkM6f_wvT-lp0oSkRHOSgEVDk", "cachedResultName": "Product Attribute Tagger - Master Catalog" },
-        "sheetName": { "__rl": true, "mode": "list", "value": 649711682, "cachedResultName": "Error_Audit_Log" },
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "cachedResultName": "Product Attribute Tagger - Master Catalog"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": 649711682,
+          "cachedResultName": "Error_Audit_Log"
+        },
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
@@ -142,19 +240,23 @@
         },
         "options": {}
       },
-      "onError": "continueRegularOutput",
-      "credentials": { "googleSheetsOAuth2Api": { "id": "LrZ3eFphjJHpL4mc", "name": "Google Sheets account" } }
+      "onError": "continueRegularOutput"
     },
     {
       "id": "c620335d-2ed1-46b6-8702-82cca17f2751",
       "name": "Respond Error (400)",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
-      "position": [1620, 540],
+      "position": [
+        1620,
+        540
+      ],
       "parameters": {
         "respondWith": "json",
         "responseBody": "={{ JSON.stringify({ ok: false, status: \"rejected\", sku_id: $(\"Pre-Flight & Normalize\").item.json.sku_id, reason: $(\"Pre-Flight & Normalize\").item.json.rejection_reason || \"Validation failed\" }) }}",
-        "options": { "responseCode": 400 }
+        "options": {
+          "responseCode": 400
+        }
       },
       "onError": "continueRegularOutput"
     },
@@ -163,29 +265,68 @@
       "name": "Check Existing SKU",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
-      "position": [1380, 380],
+      "position": [
+        1380,
+        380
+      ],
       "parameters": {
         "resource": "sheet",
         "operation": "read",
-        "documentId": { "__rl": true, "mode": "id", "value": "1tn8uOXKWjVTvssTVkTRkM6f_wvT-lp0oSkRHOSgEVDk", "cachedResultName": "Product Attribute Tagger - Master Catalog" },
-        "sheetName": { "__rl": true, "mode": "list", "value": 0, "cachedResultName": "Catalog_Attributes" },
-        "filtersUI": { "values": [{ "lookupColumn": "sku_id", "lookupValue": "={{ $json.sku_id }}" }] },
-        "options": { "returnFirstMatch": true }
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "cachedResultName": "Product Attribute Tagger - Master Catalog"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": 0,
+          "cachedResultName": "Catalog_Attributes"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "sku_id",
+              "lookupValue": "={{ $json.sku_id }}"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
       },
       "alwaysOutputData": true,
-      "onError": "continueRegularOutput",
-      "credentials": { "googleSheetsOAuth2Api": { "id": "LrZ3eFphjJHpL4mc", "name": "Google Sheets account" } }
+      "onError": "continueRegularOutput"
     },
     {
       "id": "d6410507-fb79-4c50-ad3e-651d77b59182",
       "name": "Already Cataloged?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.4,
-      "position": [1620, 220],
+      "position": [
+        1620,
+        220
+      ],
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose" },
-          "conditions": [{ "id": "dup-cond", "leftValue": "={{ Boolean($json.row_number && $json.confidence_score !== undefined) }}", "operator": { "type": "boolean", "operation": "true", "singleValue": true }, "rightValue": "" }],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "dup-cond",
+              "leftValue": "={{ Boolean($json.row_number && $json.confidence_score !== undefined) }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
           "combinator": "and"
         }
       }
@@ -195,11 +336,16 @@
       "name": "Respond Duplicate (200)",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
-      "position": [1860, 140],
+      "position": [
+        1860,
+        140
+      ],
       "parameters": {
         "respondWith": "json",
         "responseBody": "={{ JSON.stringify({ ok: true, status: \"duplicate_skipped\", sku_id: $json.sku_id, existing_product_name: $json.product_name ?? \"\" }) }}",
-        "options": { "responseCode": 200 }
+        "options": {
+          "responseCode": 200
+        }
       },
       "onError": "continueRegularOutput"
     },
@@ -208,29 +354,41 @@
       "name": "Gemini Vision (Primary)",
       "type": "@n8n/n8n-nodes-langchain.googleGemini",
       "typeVersion": 1.2,
-      "position": [2180, 240],
+      "position": [
+        2180,
+        240
+      ],
       "parameters": {
         "resource": "image",
         "operation": "analyze",
-        "modelId": { "__rl": true, "mode": "id", "value": "models/gemini-3-flash-preview", "cachedResultName": "Gemini 3 Flash Preview" },
+        "modelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "models/gemini-3-flash-preview",
+          "cachedResultName": "Gemini 3 Flash Preview"
+        },
         "text": "You are an expert retail apparel merchandiser and computer-vision cataloguer.\nAnalyze the garment image and return ONLY a single valid JSON object (no markdown fences).\nIf NOT a wearable garment/footwear/accessory, set \"is_garment_image\": false and explain in \"non_garment_reason\".",
         "inputType": "binary",
         "binaryPropertyName": "data",
         "simplify": true,
-        "options": { "maxOutputTokens": 2048 }
+        "options": {
+          "maxOutputTokens": 2048
+        }
       },
       "retryOnFail": true,
       "maxTries": 2,
       "waitBetweenTries": 2000,
-      "onError": "continueErrorOutput",
-      "credentials": { "googlePalmApi": { "id": "idwuLpBizndY2WpV", "name": "Google Gemini(PaLM) Api account" } }
+      "onError": "continueErrorOutput"
     },
     {
       "id": "45516f9f-28af-43b7-9573-d4aab43003ca",
       "name": "Parse & Normalize Attributes",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2660, 240],
+      "position": [
+        2660,
+        240
+      ],
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
@@ -242,16 +400,27 @@
       "name": "OpenAI Vision (Fallback)",
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 2.3,
-      "position": [2420, 380],
+      "position": [
+        2420,
+        380
+      ],
       "parameters": {
         "resource": "image",
         "operation": "analyze",
-        "modelId": { "__rl": true, "mode": "id", "value": "gpt-4o-mini", "cachedResultName": "gpt-4o-mini" },
+        "modelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "gpt-4o-mini",
+          "cachedResultName": "gpt-4o-mini"
+        },
         "text": "You are an expert retail apparel merchandiser and computer-vision cataloguer.\nAnalyze the garment image and return ONLY a single valid JSON object (no markdown fences).\nIf NOT a wearable garment/footwear/accessory, set \"is_garment_image\": false and explain in \"non_garment_reason\".",
         "inputType": "base64",
         "binaryPropertyName": "data",
         "simplify": true,
-        "options": { "detail": "high", "maxTokens": 1800 }
+        "options": {
+          "detail": "high",
+          "maxTokens": 1800
+        }
       },
       "retryOnFail": true,
       "maxTries": 2,
@@ -263,11 +432,29 @@
       "name": "Valid Garment?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.4,
-      "position": [2980, 280],
+      "position": [
+        2980,
+        280
+      ],
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
-          "conditions": [{ "id": "g-cond", "leftValue": "={{ $json.is_garment_image }}", "operator": { "type": "boolean", "operation": "true", "singleValue": true }, "rightValue": "" }],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "g-cond",
+              "leftValue": "={{ $json.is_garment_image }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
           "combinator": "and"
         }
       }
@@ -277,11 +464,28 @@
       "name": "High Confidence (>=80%)?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.4,
-      "position": [3220, 220],
+      "position": [
+        3220,
+        220
+      ],
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
-          "conditions": [{ "id": "hc-cond", "leftValue": "={{ $json.route }}", "operator": { "type": "string", "operation": "equals" }, "rightValue": "auto_catalog" }],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "hc-cond",
+              "leftValue": "={{ $json.route }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "auto_catalog"
+            }
+          ],
           "combinator": "and"
         }
       }
@@ -291,15 +495,30 @@
       "name": "Upsert Catalog Sheet",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
-      "position": [3480, 140],
+      "position": [
+        3480,
+        140
+      ],
       "parameters": {
         "resource": "sheet",
         "operation": "appendOrUpdate",
-        "documentId": { "__rl": true, "mode": "id", "value": "1tn8uOXKWjVTvssTVkTRkM6f_wvT-lp0oSkRHOSgEVDk", "cachedResultName": "Product Attribute Tagger - Master Catalog" },
-        "sheetName": { "__rl": true, "mode": "list", "value": 0, "cachedResultName": "Catalog_Attributes" },
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "cachedResultName": "Product Attribute Tagger - Master Catalog"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": 0,
+          "cachedResultName": "Catalog_Attributes"
+        },
         "columns": {
           "mappingMode": "defineBelow",
-          "matchingColumns": ["sku_id"],
+          "matchingColumns": [
+            "sku_id"
+          ],
           "value": {
             "sku_id": "={{ $json.sku_id }}",
             "product_name": "={{ $json.product_name }}",
@@ -327,39 +546,51 @@
             "processed_at": "={{ $json.processed_at }}"
           }
         },
-        "options": { "cellFormat": "USER_ENTERED" }
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        }
       },
       "retryOnFail": true,
       "maxTries": 3,
-      "waitBetweenTries": 1500,
-      "credentials": { "googleSheetsOAuth2Api": { "id": "LrZ3eFphjJHpL4mc", "name": "Google Sheets account" } }
+      "waitBetweenTries": 1500
     },
     {
       "id": "2f378b3e-fc52-4305-b60f-902358d35ce6",
       "name": "Notify Telegram Cataloged",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [3720, 140],
+      "position": [
+        3720,
+        140
+      ],
       "parameters": {
         "resource": "message",
         "operation": "sendMessage",
-        "chatId": "8416093451",
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
         "text": "=🏷️ <b>GARMENT CATALOGED</b> ({{ $(\"Parse & Normalize Attributes\").item.json.confidence_score }}%)\n\n<b>SKU:</b> <code>{{ $(\"Parse & Normalize Attributes\").item.json.sku_id }}</code>\n<b>Title:</b> {{ $(\"Parse & Normalize Attributes\").item.json.product_name }}\n<b>Colour:</b> {{ $(\"Parse & Normalize Attributes\").item.json.primary_colour }} ({{ $(\"Parse & Normalize Attributes\").item.json.hex_estimate }})\n<b>Fabric:</b> {{ $(\"Parse & Normalize Attributes\").item.json.fabric_material }} · {{ $(\"Parse & Normalize Attributes\").item.json.texture_finish }}\n<b>Design:</b> {{ $(\"Parse & Normalize Attributes\").item.json.design_type }}",
-        "additionalFields": { "appendAttribution": false, "disable_web_page_preview": true, "parse_mode": "HTML" }
+        "additionalFields": {
+          "appendAttribution": false,
+          "disable_web_page_preview": true,
+          "parse_mode": "HTML"
+        }
       },
-      "onError": "continueRegularOutput",
-      "credentials": { "telegramApi": { "id": "L42ogkP1JVJTbGgY", "name": "Telegram account" } }
+      "onError": "continueRegularOutput"
     },
     {
       "id": "d54dc2c2-5aa5-4a57-9404-85e861f34d70",
       "name": "Respond Cataloged (200)",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
-      "position": [3960, 140],
+      "position": [
+        3960,
+        140
+      ],
       "parameters": {
         "respondWith": "json",
         "responseBody": "={{ JSON.stringify({ ok: true, status: \"cataloged\", attributes: $(\"Parse & Normalize Attributes\").item.json }) }}",
-        "options": { "responseCode": 200 }
+        "options": {
+          "responseCode": 200
+        }
       },
       "onError": "continueRegularOutput"
     },
@@ -368,31 +599,61 @@
       "name": "Move Drive File (Processed)",
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
-      "position": [4200, 140],
+      "position": [
+        4200,
+        140
+      ],
       "parameters": {
         "resource": "file",
         "operation": "move",
-        "fileId": { "__rl": true, "mode": "id", "value": "={{ $(\"Parse & Normalize Attributes\").item.json.drive_file_id }}" },
-        "driveId": { "__rl": true, "mode": "list", "value": "My Drive" },
-        "folderId": { "__rl": true, "mode": "id", "value": "1p8ACkYD6Ih3U-rfSW4CEkzwNMYpEFJLC", "cachedResultName": "02_Processed_Cataloged" }
+        "fileId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $(\"Parse & Normalize Attributes\").item.json.drive_file_id }}"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_DRIVE_PROCESSED_FOLDER_ID",
+          "cachedResultName": "02_Processed_Cataloged"
+        }
       },
-      "onError": "continueRegularOutput",
-      "credentials": { "googleDriveOAuth2Api": { "id": "ENlFJ5nsg44Ge62M", "name": "Google Drive account" } }
+      "onError": "continueRegularOutput"
     },
     {
       "id": "042f9012-09d2-48e8-8641-0f1c047d8ba9",
       "name": "Log to Needs_Review",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
-      "position": [3480, 340],
+      "position": [
+        3480,
+        340
+      ],
       "parameters": {
         "resource": "sheet",
         "operation": "appendOrUpdate",
-        "documentId": { "__rl": true, "mode": "id", "value": "1tn8uOXKWjVTvssTVkTRkM6f_wvT-lp0oSkRHOSgEVDk", "cachedResultName": "Product Attribute Tagger - Master Catalog" },
-        "sheetName": { "__rl": true, "mode": "list", "value": 1183236710, "cachedResultName": "Needs_Review" },
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "cachedResultName": "Product Attribute Tagger - Master Catalog"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": 1183236710,
+          "cachedResultName": "Needs_Review"
+        },
         "columns": {
           "mappingMode": "defineBelow",
-          "matchingColumns": ["sku_id"],
+          "matchingColumns": [
+            "sku_id"
+          ],
           "value": {
             "sku_id": "={{ $json.sku_id }}",
             "product_name": "={{ $json.product_name }}",
@@ -400,23 +661,29 @@
             "review_reason": "={{ $json.review_reason }}"
           }
         },
-        "options": { "cellFormat": "USER_ENTERED" }
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        }
       },
       "retryOnFail": true,
       "maxTries": 3,
-      "waitBetweenTries": 1500,
-      "credentials": { "googleSheetsOAuth2Api": { "id": "LrZ3eFphjJHpL4mc", "name": "Google Sheets account" } }
+      "waitBetweenTries": 1500
     },
     {
       "id": "1a77c2d7-c900-4746-b640-c2299e2bc5a3",
       "name": "Respond Pending HITL (202)",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
-      "position": [3720, 340],
+      "position": [
+        3720,
+        340
+      ],
       "parameters": {
         "respondWith": "json",
         "responseBody": "={{ JSON.stringify({ ok: true, status: \"pending_hitl_approval\", attributes: $(\"Parse & Normalize Attributes\").item.json }) }}",
-        "options": { "responseCode": 202 }
+        "options": {
+          "responseCode": 202
+        }
       },
       "onError": "continueRegularOutput"
     },
@@ -425,30 +692,65 @@
       "name": "Telegram HITL Approval",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [3960, 340],
+      "position": [
+        3960,
+        340
+      ],
       "parameters": {
         "resource": "message",
         "operation": "sendAndWait",
-        "chatId": "8416093451",
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
         "message": "=🧐 MERCHANDISING REVIEW ({{ $(\"Parse & Normalize Attributes\").item.json.confidence_score }}%)\n\nSKU: {{ $(\"Parse & Normalize Attributes\").item.json.sku_id }}\nTitle: {{ $(\"Parse & Normalize Attributes\").item.json.product_name }}\nFlag: {{ $(\"Parse & Normalize Attributes\").item.json.review_reason }}\n\nPromote to Catalog?",
         "responseType": "approval",
-        "approvalOptions": { "values": { "approvalType": "double", "approveLabel": "✅ Approve", "disapproveLabel": "❌ Reject" } },
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "approveLabel": "✅ Approve",
+            "disapproveLabel": "❌ Reject"
+          }
+        },
         "chatApproval": true,
-        "options": { "limitWaitTime": { "values": { "limitType": "afterTimeInterval", "resumeAmount": 24, "resumeUnit": "hours" } }, "appendAttribution": false }
+        "options": {
+          "limitWaitTime": {
+            "values": {
+              "limitType": "afterTimeInterval",
+              "resumeAmount": 24,
+              "resumeUnit": "hours"
+            }
+          },
+          "appendAttribution": false
+        }
       },
-      "onError": "continueRegularOutput",
-      "credentials": { "telegramApi": { "id": "L42ogkP1JVJTbGgY", "name": "Telegram account" } }
+      "onError": "continueRegularOutput"
     },
     {
       "id": "45632526-4bcc-43bc-a0ed-0e1df49589c4",
       "name": "Approved?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.4,
-      "position": [4200, 340],
+      "position": [
+        4200,
+        340
+      ],
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
-          "conditions": [{ "id": "hitl-ok", "leftValue": "={{ $json.data?.approved }}", "operator": { "type": "boolean", "operation": "true", "singleValue": true }, "rightValue": "" }],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "hitl-ok",
+              "leftValue": "={{ $json.data?.approved }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
           "combinator": "and"
         }
       }
@@ -458,15 +760,30 @@
       "name": "Promote Approved SKU",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
-      "position": [4480, 240],
+      "position": [
+        4480,
+        240
+      ],
       "parameters": {
         "resource": "sheet",
         "operation": "appendOrUpdate",
-        "documentId": { "__rl": true, "mode": "id", "value": "1tn8uOXKWjVTvssTVkTRkM6f_wvT-lp0oSkRHOSgEVDk", "cachedResultName": "Product Attribute Tagger - Master Catalog" },
-        "sheetName": { "__rl": true, "mode": "list", "value": 0, "cachedResultName": "Catalog_Attributes" },
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "cachedResultName": "Product Attribute Tagger - Master Catalog"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": 0,
+          "cachedResultName": "Catalog_Attributes"
+        },
         "columns": {
           "mappingMode": "defineBelow",
-          "matchingColumns": ["sku_id"],
+          "matchingColumns": [
+            "sku_id"
+          ],
           "value": {
             "sku_id": "={{ $(\"Parse & Normalize Attributes\").item.json.sku_id }}",
             "product_name": "={{ $(\"Parse & Normalize Attributes\").item.json.product_name }}",
@@ -474,24 +791,40 @@
             "processed_at": "={{ $now.toISO() }}"
           }
         },
-        "options": { "cellFormat": "USER_ENTERED" }
-      },
-      "credentials": { "googleSheetsOAuth2Api": { "id": "LrZ3eFphjJHpL4mc", "name": "Google Sheets account" } }
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        }
+      }
     },
     {
       "id": "59fd1f8a-f8c4-4408-b4ec-cb6f65f1a618",
       "name": "Mark Rejected",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
-      "position": [4480, 440],
+      "position": [
+        4480,
+        440
+      ],
       "parameters": {
         "resource": "sheet",
         "operation": "appendOrUpdate",
-        "documentId": { "__rl": true, "mode": "id", "value": "1tn8uOXKWjVTvssTVkTRkM6f_wvT-lp0oSkRHOSgEVDk", "cachedResultName": "Product Attribute Tagger - Master Catalog" },
-        "sheetName": { "__rl": true, "mode": "list", "value": 1183236710, "cachedResultName": "Needs_Review" },
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "cachedResultName": "Product Attribute Tagger - Master Catalog"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": 1183236710,
+          "cachedResultName": "Needs_Review"
+        },
         "columns": {
           "mappingMode": "defineBelow",
-          "matchingColumns": ["sku_id"],
+          "matchingColumns": [
+            "sku_id"
+          ],
           "value": {
             "sku_id": "={{ $(\"Parse & Normalize Attributes\").item.json.sku_id }}",
             "status": "Rejected (HITL)",
@@ -499,19 +832,23 @@
           }
         },
         "options": {}
-      },
-      "credentials": { "googleSheetsOAuth2Api": { "id": "LrZ3eFphjJHpL4mc", "name": "Google Sheets account" } }
+      }
     },
     {
       "id": "4073188a-6f71-4fcc-b066-3f53c435e718",
       "name": "Respond Non-Garment (422)",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
-      "position": [3220, 500],
+      "position": [
+        3220,
+        500
+      ],
       "parameters": {
         "respondWith": "json",
         "responseBody": "={{ JSON.stringify({ ok: false, status: \"non_garment_rejected\", sku_id: $(\"Parse & Normalize Attributes\").item.json.sku_id, reason: $(\"Parse & Normalize Attributes\").item.json.review_reason }) }}",
-        "options": { "responseCode": 422 }
+        "options": {
+          "responseCode": 422
+        }
       },
       "onError": "continueRegularOutput"
     },
@@ -520,7 +857,10 @@
       "name": "On Workflow Error",
       "type": "n8n-nodes-base.errorTrigger",
       "typeVersion": 1,
-      "position": [120, 740],
+      "position": [
+        120,
+        740
+      ],
       "parameters": {}
     },
     {
@@ -528,45 +868,360 @@
       "name": "Alert Owner on Telegram",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [360, 740],
+      "position": [
+        360,
+        740
+      ],
       "parameters": {
         "resource": "message",
         "operation": "sendMessage",
-        "chatId": "8416093451",
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
         "text": "=🚨 <b>PRODUCT TAGGER ERROR</b>\n\n<b>Node:</b> {{ $json.execution?.lastNodeExecuted ?? \"Unknown\" }}\n<b>Error:</b> {{ $json.execution?.error?.message ?? \"Unhandled\" }}\n🔗 <a href=\"{{ $json.execution?.url ?? \"\" }}\">Inspect Run</a>",
-        "additionalFields": { "appendAttribution": false, "disable_web_page_preview": true, "parse_mode": "HTML" }
+        "additionalFields": {
+          "appendAttribution": false,
+          "disable_web_page_preview": true,
+          "parse_mode": "HTML"
+        }
       },
-      "onError": "continueRegularOutput",
-      "credentials": { "telegramApi": { "id": "L42ogkP1JVJTbGgY", "name": "Telegram account" } }
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
-    "Drive Garment Intake": { "main": [[{ "node": "Download Drive Image", "type": "main", "index": 0 }]] },
-    "Download Drive Image": { "main": [[{ "node": "Pre-Flight & Normalize", "type": "main", "index": 0 }]] },
-    "Pre-Flight & Normalize": { "main": [[{ "node": "Valid Image?", "type": "main", "index": 0 }]] },
-    "Webhook Garment Intake": { "main": [[{ "node": "Needs URL Fetch?", "type": "main", "index": 0 }]] },
-    "Needs URL Fetch?": { "main": [[{ "node": "Fetch Image URL", "type": "main", "index": 0 }], [{ "node": "Pre-Flight & Normalize", "type": "main", "index": 0 }]] },
-    "Fetch Image URL": { "main": [[{ "node": "Pre-Flight & Normalize", "type": "main", "index": 0 }]] },
-    "Valid Image?": { "main": [[{ "node": "Merge Dedup & Binary", "type": "main", "index": 0 }, { "node": "Check Existing SKU", "type": "main", "index": 0 }], [{ "node": "Log Error to Audit Sheet", "type": "main", "index": 0 }]] },
-    "Merge Dedup & Binary": { "main": [[{ "node": "Already Cataloged?", "type": "main", "index": 0 }]] },
-    "Log Error to Audit Sheet": { "main": [[{ "node": "Respond Error (400)", "type": "main", "index": 0 }, { "node": "Respond Non-Garment (422)", "type": "main", "index": 0 }]] },
-    "Check Existing SKU": { "main": [[{ "node": "Merge Dedup & Binary", "type": "main", "index": 1 }]] },
-    "Already Cataloged?": { "main": [[{ "node": "Respond Duplicate (200)", "type": "main", "index": 0 }], [{ "node": "Gemini Vision (Primary)", "type": "main", "index": 0 }]] },
-    "Gemini Vision (Primary)": { "main": [[{ "node": "Parse & Normalize Attributes", "type": "main", "index": 0 }], [{ "node": "OpenAI Vision (Fallback)", "type": "main", "index": 0 }]] },
-    "Parse & Normalize Attributes": { "main": [[{ "node": "Valid Garment?", "type": "main", "index": 0 }]] },
-    "OpenAI Vision (Fallback)": { "main": [[{ "node": "Parse & Normalize Attributes", "type": "main", "index": 0 }], [{ "node": "Log Error to Audit Sheet", "type": "main", "index": 0 }]] },
-    "Valid Garment?": { "main": [[{ "node": "High Confidence (>=80%)?", "type": "main", "index": 0 }], [{ "node": "Log Error to Audit Sheet", "type": "main", "index": 0 }]] },
-    "High Confidence (>=80%)?": { "main": [[{ "node": "Upsert Catalog Sheet", "type": "main", "index": 0 }], [{ "node": "Log to Needs_Review", "type": "main", "index": 0 }]] },
-    "Upsert Catalog Sheet": { "main": [[{ "node": "Notify Telegram Cataloged", "type": "main", "index": 0 }]] },
-    "Notify Telegram Cataloged": { "main": [[{ "node": "Respond Cataloged (200)", "type": "main", "index": 0 }]] },
-    "Respond Cataloged (200)": { "main": [[{ "node": "Move Drive File (Processed)", "type": "main", "index": 0 }]] },
-    "Log to Needs_Review": { "main": [[{ "node": "Respond Pending HITL (202)", "type": "main", "index": 0 }]] },
-    "Respond Pending HITL (202)": { "main": [[{ "node": "Telegram HITL Approval", "type": "main", "index": 0 }]] },
-    "Telegram HITL Approval": { "main": [[{ "node": "Approved?", "type": "main", "index": 0 }]] },
-    "Approved?": { "main": [[{ "node": "Promote Approved SKU", "type": "main", "index": 0 }], [{ "node": "Mark Rejected", "type": "main", "index": 0 }]] },
-    "On Workflow Error": { "main": [[{ "node": "Alert Owner on Telegram", "type": "main", "index": 0 }]] }
+    "Drive Garment Intake": {
+      "main": [
+        [
+          {
+            "node": "Download Drive Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Drive Image": {
+      "main": [
+        [
+          {
+            "node": "Pre-Flight & Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pre-Flight & Normalize": {
+      "main": [
+        [
+          {
+            "node": "Valid Image?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Garment Intake": {
+      "main": [
+        [
+          {
+            "node": "Needs URL Fetch?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs URL Fetch?": {
+      "main": [
+        [
+          {
+            "node": "Fetch Image URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pre-Flight & Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Image URL": {
+      "main": [
+        [
+          {
+            "node": "Pre-Flight & Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid Image?": {
+      "main": [
+        [
+          {
+            "node": "Merge Dedup & Binary",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Check Existing SKU",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Error to Audit Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Dedup & Binary": {
+      "main": [
+        [
+          {
+            "node": "Already Cataloged?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Error to Audit Sheet": {
+      "main": [
+        [
+          {
+            "node": "Respond Error (400)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond Non-Garment (422)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Existing SKU": {
+      "main": [
+        [
+          {
+            "node": "Merge Dedup & Binary",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Already Cataloged?": {
+      "main": [
+        [
+          {
+            "node": "Respond Duplicate (200)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gemini Vision (Primary)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Vision (Primary)": {
+      "main": [
+        [
+          {
+            "node": "Parse & Normalize Attributes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OpenAI Vision (Fallback)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Normalize Attributes": {
+      "main": [
+        [
+          {
+            "node": "Valid Garment?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Vision (Fallback)": {
+      "main": [
+        [
+          {
+            "node": "Parse & Normalize Attributes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Error to Audit Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid Garment?": {
+      "main": [
+        [
+          {
+            "node": "High Confidence (>=80%)?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Error to Audit Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "High Confidence (>=80%)?": {
+      "main": [
+        [
+          {
+            "node": "Upsert Catalog Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log to Needs_Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Catalog Sheet": {
+      "main": [
+        [
+          {
+            "node": "Notify Telegram Cataloged",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Telegram Cataloged": {
+      "main": [
+        [
+          {
+            "node": "Respond Cataloged (200)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond Cataloged (200)": {
+      "main": [
+        [
+          {
+            "node": "Move Drive File (Processed)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Needs_Review": {
+      "main": [
+        [
+          {
+            "node": "Respond Pending HITL (202)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond Pending HITL (202)": {
+      "main": [
+        [
+          {
+            "node": "Telegram HITL Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram HITL Approval": {
+      "main": [
+        [
+          {
+            "node": "Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approved?": {
+      "main": [
+        [
+          {
+            "node": "Promote Approved SKU",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On Workflow Error": {
+      "main": [
+        [
+          {
+            "node": "Alert Owner on Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
   "active": false,
-  "settings": { "executionOrder": "v1", "availableInMCP": true },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
   "tags": []
 }
