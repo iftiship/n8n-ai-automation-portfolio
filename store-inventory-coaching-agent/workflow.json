@@ -35,8 +35,7 @@
       "position": [
         128,
         288
-      ],
-      "webhookId": "802670b5-b77e-4872-9f73-497389989844"
+      ]
     },
     {
       "parameters": {
@@ -51,13 +50,7 @@
       "position": [
         320,
         224
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Y1F8SVsPd5qHjtKg",
-          "name": "Supabase account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -140,13 +133,7 @@
       "position": [
         960,
         416
-      ],
-      "credentials": {
-        "googlePalmApi": {
-          "id": "idwuLpBizndY2WpV",
-          "name": "Google Gemini(PaLM) Api account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -228,17 +215,11 @@
       "position": [
         1440,
         224
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Y1F8SVsPd5qHjtKg",
-          "name": "Supabase account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
-        "chatId": "8416093451",
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
         "text": "=📊 <b>DAILY STORE OPS & COACHING BRIEF</b>\n\n<b>Summary:</b> {{ $(\"Ops Coach Agent\").item.json.output.coaching_summary }}\n\n<b>Action Items:</b>\n• {{ ($(\"Ops Coach Agent\").item.json.output.action_items || []).join(\"\\n• \") }}\n\n<b>Proposed Transfer ({{ $(\"Ops Coach Agent\").item.json.output.top_transfer.urgency.toUpperCase() }}):</b>\n{{ $(\"Ops Coach Agent\").item.json.output.top_transfer.qty }}x {{ $(\"Ops Coach Agent\").item.json.output.top_transfer.product_name }}\n{{ $(\"Ops Coach Agent\").item.json.output.top_transfer.from_store }} ➡️ {{ $(\"Ops Coach Agent\").item.json.output.top_transfer.to_store }}",
         "additionalFields": {
           "appendAttribution": false,
@@ -253,14 +234,7 @@
       "position": [
         1600,
         224
-      ],
-      "webhookId": "72c3e8ab-67c1-4ca6-bc49-925d3fc8a593",
-      "credentials": {
-        "telegramApi": {
-          "id": "L42ogkP1JVJTbGgY",
-          "name": "Telegram account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -282,7 +256,7 @@
     {
       "parameters": {
         "operation": "sendAndWait",
-        "chatId": "8416093451",
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
         "message": "=🚚 <b>APPROVE STOCK TRANSFER?</b>\n\n<b>SKU:</b> {{ $(\"Ops Coach Agent\").item.json.output.top_transfer.sku_id }} — {{ $(\"Ops Coach Agent\").item.json.output.top_transfer.product_name }}\n<b>Qty:</b> {{ $(\"Ops Coach Agent\").item.json.output.top_transfer.qty }} units\n<b>Route:</b> {{ $(\"Ops Coach Agent\").item.json.output.top_transfer.from_store }} ➡️ {{ $(\"Ops Coach Agent\").item.json.output.top_transfer.to_store }}\n<b>Why:</b> {{ $(\"Ops Coach Agent\").item.json.output.top_transfer.rationale }}",
         "approvalOptions": {
           "values": {
@@ -298,14 +272,7 @@
       "position": [
         1952,
         224
-      ],
-      "webhookId": "75cca411-775d-4a72-baf3-086d0efad2f2",
-      "credentials": {
-        "telegramApi": {
-          "id": "L42ogkP1JVJTbGgY",
-          "name": "Telegram account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -341,13 +308,7 @@
       "position": [
         2128,
         224
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Y1F8SVsPd5qHjtKg",
-          "name": "Supabase account"
-        }
-      }
+      ]
     },
     {
       "parameters": {},
@@ -362,7 +323,7 @@
     },
     {
       "parameters": {
-        "chatId": "8416093451",
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
         "text": "=🚨 <b>STORE OPS AGENT ERROR</b>\n\n<b>Node:</b> {{ $json.execution?.lastNodeExecuted ?? \"Unknown\" }}\n<b>Error:</b> {{ $json.execution?.error?.message ?? \"Unhandled\" }}\n🔗 <a href=\"{{ $json.execution?.url ?? \"\" }}\">Inspect Run</a>",
         "additionalFields": {
           "appendAttribution": false,
@@ -377,14 +338,7 @@
       "position": [
         320,
         544
-      ],
-      "webhookId": "37cb822f-ee42-4ba3-81ea-290ec51bc90f",
-      "credentials": {
-        "telegramApi": {
-          "id": "L42ogkP1JVJTbGgY",
-          "name": "Telegram account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
