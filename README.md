@@ -1,5 +1,7 @@
 # n8n AI & Retail Automation Portfolio
 
+Built by **Iftikar Rahman** · [LinkedIn](https://linkedin.com/in/ifti-ahmed-ai)
+
 Production-grade **n8n** workflows engineered with structured JSON outputs, pre-flight validation, automatic LLM fallback routing, human-in-the-loop (HITL) approvals, and dead-letter error monitoring.
 
 ## Flagship Automations
