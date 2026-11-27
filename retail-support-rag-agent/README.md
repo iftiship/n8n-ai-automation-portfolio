@@ -1,9 +1,9 @@
 # Retail Support RAG Agent — Policy, Order Lookup & Escalation Engine
 
-**Design Principle:** Ground every answer in the store's own policy documents, switch to a backup AI model if the first one fails, and hand off to a human agent whenever confidence drops below 70%.
-
 ## Workflow Preview
 <img width="1880" height="830" alt="IMG_20261126_193915" src="https://github.com/user-attachments/assets/3505ec65-a216-47f8-9594-5f10082559f9" />
+
+> **Design Principle:** Ground every answer in the store's own policy documents, switch to a backup AI model if the first one fails, and hand off to a human agent whenever confidence drops below 70%.
 
 ## The Problem It Solves
 During wedding and festive seasons, ethnic-wear support teams get flooded with the same repetitive questions: *"Can I exchange my sherwani?", "How long do alterations take?", "Where is my order?"*
