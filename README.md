@@ -14,6 +14,8 @@ Production-grade **n8n** workflows engineered with structured JSON outputs, pre-
 ---
 
 ## Reliability & Engineering Standards
+Every workflow has a fallback model and alerts me on failure.
+
 - **Structured JSON Enforcement:** Strict schema parsing and taxonomy normalization.
 - **Pre-Flight & Idempotency Gates:** MIME/size validation and SKU deduplication before incurring LLM costs.
 - **Automatic Fallback Routing:** Primary model failures route seamlessly to secondary vision/LLM providers.
