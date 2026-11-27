@@ -14,8 +14,7 @@
       "position": [
         48,
         112
-      ],
-      "webhookId": "fa7da482-dc0e-41d5-ab19-e5920a9d271d"
+      ]
     },
     {
       "parameters": {
@@ -97,13 +96,7 @@
       "position": [
         624,
         448
-      ],
-      "credentials": {
-        "googlePalmApi": {
-          "id": "idwuLpBizndY2WpV",
-          "name": "Google Gemini(PaLM) Api account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -250,13 +243,7 @@
         1808,
         192
       ],
-      "alwaysOutputData": true,
-      "credentials": {
-        "supabaseApi": {
-          "id": "Y1F8SVsPd5qHjtKg",
-          "name": "Supabase account"
-        }
-      }
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -285,13 +272,7 @@
         1808,
         384
       ],
-      "alwaysOutputData": true,
-      "credentials": {
-        "supabaseApi": {
-          "id": "Y1F8SVsPd5qHjtKg",
-          "name": "Supabase account"
-        }
-      }
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -321,8 +302,7 @@
       "position": [
         48,
         224
-      ],
-      "webhookId": "3e9a74a5-5863-4a77-92d6-600a40ee70ea"
+      ]
     },
     {
       "parameters": {
@@ -455,7 +435,7 @@
     },
     {
       "parameters": {
-        "chatId": "8416093451",
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
         "text": "=🛡️ <b>SALES BI SECURITY GUARDRAIL TRIGGERED</b>\n\n<b>User:</b> {{ $(\"Build Guardrail Refusal\").item.json.requested_by }} ({{ $(\"Build Guardrail Refusal\").item.json.channel }})\n<b>Reason:</b> {{ $(\"Build Guardrail Refusal\").item.json.reason }}\n<b>Blocked Query:</b>\n<code>{{ $(\"Build Guardrail Refusal\").item.json.question }}</code>",
         "additionalFields": {
           "appendAttribution": false,
@@ -471,14 +451,7 @@
         1600,
         768
       ],
-      "webhookId": "32371144-d7ff-4dc8-9bee-860eaf37607d",
-      "onError": "continueRegularOutput",
-      "credentials": {
-        "telegramApi": {
-          "id": "L42ogkP1JVJTbGgY",
-          "name": "Telegram account"
-        }
-      }
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -533,7 +506,7 @@
     },
     {
       "parameters": {
-        "chatId": "8416093451",
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
         "text": "=🚨 <b>SALES DATA BI AGENT ERROR</b>\n\n<b>Node:</b> {{ $json.execution?.lastNodeExecuted ?? \"Unknown\" }}\n<b>Error:</b> {{ $json.execution?.error?.message ?? \"Unhandled\" }}\n🔗 <a href=\"{{ $json.execution?.url ?? \"\" }}\">Inspect Run</a>",
         "additionalFields": {
           "appendAttribution": false,
@@ -549,14 +522,7 @@
         336,
         720
       ],
-      "webhookId": "5d5262c7-3a11-41b3-8349-23cf612ccd0b",
-      "onError": "continueRegularOutput",
-      "credentials": {
-        "telegramApi": {
-          "id": "L42ogkP1JVJTbGgY",
-          "name": "Telegram account"
-        }
-      }
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -669,8 +635,7 @@
       "position": [
         48,
         352
-      ],
-      "webhookId": "2507be93-4861-456c-9b3e-394c5002698f"
+      ]
     },
     {
       "parameters": {
@@ -686,8 +651,7 @@
       "position": [
         48,
         464
-      ],
-      "webhookId": "64da5cf1-d321-4201-a92f-8aee0a6af853"
+      ]
     },
     {
       "parameters": {
@@ -808,7 +772,6 @@
         2928,
         224
       ],
-      "webhookId": "bc7f97bd-4b6d-4b3f-8bce-ea6151c0633b",
       "disabled": true
     },
     {
@@ -930,7 +893,6 @@
         1984,
         832
       ],
-      "webhookId": "b5e119bb-bf33-42b6-8b05-520086157586",
       "disabled": true
     },
     {
@@ -950,8 +912,7 @@
       "position": [
         1984,
         944
-      ],
-      "webhookId": "fda40eed-e619-41e8-980e-745c3ea1dbc1"
+      ]
     },
     {
       "parameters": {
@@ -978,8 +939,7 @@
         384
       ],
       "id": "d09b6ca3-fc4e-4823-b927-00a9ae97dbe7",
-      "name": "Send message",
-      "webhookId": "fec44752-aa51-4df9-abbf-1e36e827f2af"
+      "name": "Send message"
     }
   ],
   "connections": {
