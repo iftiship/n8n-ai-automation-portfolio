@@ -6,10 +6,10 @@ Production-grade **n8n** workflows engineered with structured JSON outputs, pre-
 
 | # | Project | Stack | Status |
 |---|---|---|---|
-| 1 | **[Product Attribute Tagger](./product-attribute-tagger/)** | n8n, Gemini 3 Flash Vision, OpenAI `gpt-4o-mini` Fallback, Google Drive, Google Sheets, Telegram HITL | **Live & Production-Ready** |
-| 2 | **[Retail Support RAG Agent](./retail-support-rag-agent/)** | n8n, Supabase `pgvector`, OpenAI `text-embedding-3-small`, Gemini 2.5 Flash + `gpt-4o-mini` Fallback, Telegram Escalation | **Live & Production-Ready** |
-| 3 | **[Store Inventory & Coaching Agent](./store-inventory-coaching-agent/)** | n8n, Supabase, Gemini 2.5 Flash + `gpt-4o-mini` Fallback, Telegram HITL Transfer Approvals | **Live & Production-Ready** |
-| 4 | **[Ask-Your-Sales-Data Agent](./ask-your-sales-data-agent/)** | n8n, DeepSeek Chat + `gpt-4o-mini` Fallback, Supabase, Slack, WhatsApp, Web Chat, SQL/PII Guardrails | **Live & Production-Ready** |
+| 1 | **[Product Attribute Tagger](./product-attribute-tagger/)** | n8n, Gemini 3 Flash Vision, OpenAI `gpt-4o-mini` Fallback, Google Drive, Google Sheets, Telegram HITL | **Working Demo** |
+| 2 | **[Retail Support RAG Agent](./retail-support-rag-agent/)** | n8n, Supabase `pgvector`, OpenAI `text-embedding-3-small`, Gemini 2.5 Flash + `gpt-4o-mini` Fallback, Telegram Escalation | **Working Demo** |
+| 3 | **[Store Inventory & Coaching Agent](./store-inventory-coaching-agent/)** | n8n, Supabase, Gemini 2.5 Flash + `gpt-4o-mini` Fallback, Telegram HITL Transfer Approvals | **Working Demo** |
+| 4 | **[Ask-Your-Sales-Data Agent](./ask-your-sales-data-agent/)** | n8n, DeepSeek Chat + `gpt-4o-mini` Fallback, Supabase, Slack, WhatsApp, Web Chat, SQL/PII Guardrails | **Working Demo** |
 
 ---
 
