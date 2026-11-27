@@ -15,8 +15,7 @@
       "position": [
         128,
         144
-      ],
-      "webhookId": "054db9b0-9a6b-4147-a567-c46bfb516525"
+      ]
     },
     {
       "parameters": {
@@ -52,13 +51,7 @@
       "position": [
         528,
         144
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Y1F8SVsPd5qHjtKg",
-          "name": "Supabase account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -131,8 +124,7 @@
       "position": [
         128,
         528
-      ],
-      "webhookId": "5d322d68-57f1-4f2d-b34d-c61b1f4b02ae"
+      ]
     },
     {
       "parameters": {
@@ -162,8 +154,7 @@
       "position": [
         128,
         656
-      ],
-      "webhookId": "fdccbe9d-8949-4071-a01f-7fda6abee2d7"
+      ]
     },
     {
       "parameters": {
@@ -199,13 +190,7 @@
       "position": [
         528,
         704
-      ],
-      "credentials": {
-        "googlePalmApi": {
-          "id": "idwuLpBizndY2WpV",
-          "name": "Google Gemini(PaLM) Api account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -264,13 +249,7 @@
       "position": [
         976,
         704
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Y1F8SVsPd5qHjtKg",
-          "name": "Supabase account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -374,13 +353,7 @@
         1456,
         576
       ],
-      "onError": "continueRegularOutput",
-      "credentials": {
-        "supabaseApi": {
-          "id": "Y1F8SVsPd5qHjtKg",
-          "name": "Supabase account"
-        }
-      }
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -418,7 +391,7 @@
     },
     {
       "parameters": {
-        "chatId": "8416093451",
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
         "text": "=🆘 <b>SUPPORT ESCALATION</b> ({{ $(\"Confidence Gate\").item.json.confidence_score }}% Confidence)\n\n<b>Customer:</b> {{ $(\"Confidence Gate\").item.json.customer_name }} ({{ $(\"Confidence Gate\").item.json.customer_contact }})\n<b>Intent:</b> {{ $(\"Confidence Gate\").item.json.intent_category }}\n<b>Reason:</b> {{ $(\"Confidence Gate\").item.json.escalation_reason }}\n\n<b>Question:</b>\n{{ $(\"Confidence Gate\").item.json.question }}\n\n<b>AI Draft:</b>\n{{ $(\"Confidence Gate\").item.json.answer }}",
         "additionalFields": {
           "appendAttribution": false,
@@ -434,14 +407,7 @@
         1872,
         528
       ],
-      "webhookId": "a7f2eb6d-12f7-4093-a5ca-7346085bcad1",
-      "onError": "continueRegularOutput",
-      "credentials": {
-        "telegramApi": {
-          "id": "L42ogkP1JVJTbGgY",
-          "name": "Telegram account"
-        }
-      }
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -474,7 +440,7 @@
     },
     {
       "parameters": {
-        "chatId": "8416093451",
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
         "text": "=🚨 <b>RETAIL RAG AGENT ERROR</b>\n\n<b>Node:</b> {{ $json.execution?.lastNodeExecuted ?? \"Unknown\" }}\n<b>Error:</b> {{ $json.execution?.error?.message ?? \"Unhandled\" }}\n🔗 <a href=\"{{ $json.execution?.url ?? \"\" }}\">Inspect Run</a>",
         "additionalFields": {
           "appendAttribution": false,
@@ -490,14 +456,7 @@
         320,
         880
       ],
-      "webhookId": "4d97be62-1f5d-432a-87c1-ee849a74dbd8",
-      "onError": "continueRegularOutput",
-      "credentials": {
-        "telegramApi": {
-          "id": "L42ogkP1JVJTbGgY",
-          "name": "Telegram account"
-        }
-      }
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -604,13 +563,7 @@
       "position": [
         1136,
         832
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "Y1F8SVsPd5qHjtKg",
-          "name": "Supabase account"
-        }
-      }
+      ]
     }
   ],
   "connections": {
